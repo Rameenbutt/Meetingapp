@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Registration page for new users">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Register Page</title>
+    <script>
+        // Registration form password validation
+        function validatePassword() {
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
+            if (password !== confirmPassword) {
+                alert("Passwords do not match");
+                return false; // prevent form submission
+            }
+            return true;
+        }
+    </script>
+</head>
+
+<body class="bg-cover bg-center h-screen w-screen relative" style="background-image: url('/edu.jpeg');">
+
+    <!-- Overlay -->
+    <div class="w-full h-full bg-black bg-opacity-60 absolute top-0 left-0"></div>
+
+    <!-- Registration Form Container -->
+    <div class="relative flex items-center justify-center h-full text-white">
+        <div class="bg-white bg-opacity-20 backdrop-blur-md p-8 rounded-lg w-[400px] border-2 border-purple-600 shadow-xl shadow-purple-800">
+            <h1 class="text-3xl font-bold text-center mb-6">Register</h1>
+
+            <!-- Registration Form -->
+            <form action="/register" method="POST" onsubmit="return validatePassword()">
+                <!-- First Name -->
+                <div class="mb-4">
+                    <label class="block text-lg font-semibold mb-1" for="firstName">First Name</label>
+                    <input class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-purple-500" 
+                           type="text" id="firstName" name="firstName" placeholder="Enter your first name" required>
+                </div>
+
+                <!-- Last Name -->
+                <div class="mb-4">
+                    <label class="block text-lg font-semibold mb-1" for="lastName">Last Name</label>
+                    <input class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-purple-500" 
+                           type="text" id="lastName" name="lastName" placeholder="Enter your last name" required>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-4">
+                    <label class="block text-lg font-semibold mb-1" for="email">Email</label>
+                    <input class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-purple-500" 
+                           type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+
+                <!-- Password -->
+                <div class="mb-4">
+                    <label class="block text-lg font-semibold mb-1" for="password">Password</label>
+                    <input class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-purple-500" 
+                           type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-4">
+                    <label class="block text-lg font-semibold mb-1" for="confirm-password">Confirm Password</label>
+                    <input class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-purple-500" 
+                           type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
+                </div>
+
+                <!-- Gender Dropdown -->
+                <div class="mb-4">
+                    <label class="block text-lg font-semibold mb-1" for="gender">Gender</label>
+                    <select id="gender" name="gender" class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-purple-500">
+                        <option value="" selected>Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="terms" name="terms" required class="mr-2">
+                    <label for="terms" class="text-sm">I agree with the <a href="#" class="underline">terms and policies</a></label>
+                </div>
+
+                <!-- Submit Button -->
+                <button class="bg-purple-600 hover:bg-purple-700 text-white text-lg font-semibold px-4 py-2 rounded w-full transition duration-300 ease-in-out" type="submit">
+                    Register
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="text-center mt-6">
+                <p class="text-sm">Already have an account? <a class="text-purple-400 hover:underline" href="login.html">Login</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

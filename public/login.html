@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Login page for user authentication">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Login Page</title>
+    <script>
+        // Autofill email and clear password on page load
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const email = params.get('email');
+            if (email) {
+                document.getElementById('email').value = email;
+            }
+
+            const passwordField = document.getElementById('password');
+            if (passwordField) {
+                passwordField.value = '';
+            }
+        }
+    </script>
+</head>
+
+<body style="background-image: url('/edu.jpeg'); background-position: center; background-size: cover; background-repeat: no-repeat; height: 100vh; width: 100vw; position: relative;">
+
+    <div class="w-screen h-[100vh] bg-black bg-opacity-60 absolute top-0 left-0"></div>
+    
+    <div class="relative flex items-center justify-center h-full text-white">
+        <div class="flex flex-col gap-6 p-6 rounded-md w-[450px] border-2 border-white shadow-xl shadow-purple-800">
+            <h1 class="text-2xl uppercase text-center font-semibold">Login</h1>
+
+            <!-- Login Form -->
+            <form action="/login" method="POST">
+                <div class="flex flex-col gap-2">
+                    <label class="text-xl font-semibold text-left" for="email">Email</label>
+                    <input class="outline-none px-4 py-2 bg-transparent border-2 text-white w-full" type="text" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-xl font-semibold text-left" for="password">Password</label>
+                    <input class="outline-none px-4 py-2 bg-transparent border-2 text-white w-full" type="password" id="password" name="password" placeholder="Enter your Password" required>
+                </div>
+
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <input class="text-md" type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="underline">Forgot Password?</a>
+                </div>
+
+                <button class="bg-purple-950 px-4 py-2 rounded text-xl w-full hover:bg-transparent hover:border-2 hover:border-purple-950" type="submit">Login</button>
+            </form>
+
+            <div class="text-center mt-4">
+                <p>Don't have an account?</p>
+                <a class="hover:underline" href="register.html">Register</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

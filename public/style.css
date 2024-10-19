@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for FullCalendar */
+.fc-view-container {
+  @apply p-4 bg-gray-100 rounded-lg shadow-md;
+}
+.fc-daygrid-day {
+  @apply text-sm;
+}
+.fc-daygrid-day-number {
+  @apply font-bold;
+}
+.fc-daygrid-day-events {
+  @apply bg-white border border-gray-300 rounded-lg shadow-sm;
+}
+.fc-event {
+  @apply bg-blue-500 text-white rounded px-2 py-1 text-xs;
+}
+.fc-event:hover {
+  @apply bg-blue-600;
+}
+.fc-now-indicator {
+  @apply border-2 border-red-500;
+}

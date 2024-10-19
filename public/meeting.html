@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>CaptionFlow Pro - Meetings</title>
+</head>
+
+<body class="h-screen flex flex-col">
+    <nav class="px-4 py-2 bg-gray-200 font-bold pl-20 flex items-center">
+        <div class="flex items-center space-x-[45rem]">
+            <p class="font-bold hover:text-purple-900 cursor-pointer text-xl">CaptionFlow Pro</p>
+            <div class="relative w-[400px]">
+                <input type="text" placeholder="Search meetings" id="searchBar" 
+                    class="border rounded-lg border-gray-200 text-gray-800 font-normal p-2 pl-10 focus:border-purple-900 focus:outline-none w-full">
+                <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i> 
+            </div>
+        </div>
+    </nav>
+    
+    <div class="flex flex-row flex-grow">
+        <nav class="flex-shrink-0 w-[15rem] flex flex-col bg-gray-300 py-3 pl-2">
+            <a href="chatbox.html">
+                <p class="p-2 rounded-2xl hover:bg-purple-900 cursor-pointer hover:text-white mr-2 mb-1"><i
+                        class="bi bi-chat-square-text-fill px-2"></i>Chatbox</p>
+            </a>
+            <a href="notification.html">
+                <p class="p-2 rounded-2xl hover:bg-purple-900 cursor-pointer hover:text-white mr-2 mb-1"><i
+                        class="bi bi-bell px-2"></i>Notifications</p>
+            </a>
+            <a href="classes.html">
+                <p class="p-2 rounded-2xl hover:bg-purple-900 cursor-pointer hover:text-white mr-2 mb-1"><i
+                        class="bi bi-people-fill px-2"></i>Classes</p>
+            </a>
+            <a href="meeting.html">
+                <p class="p-2 rounded-2xl bg-purple-900 cursor-pointer text-white mr-2 mb-1"><i
+                        class="bi bi-book px-2"></i>Meetings</p>
+            </a>
+            <a href="profile.html">
+                <p class="p-2 rounded-2xl hover:bg-purple-900 cursor-pointer hover:text-white mr-2 mb-1"><i
+                        class="bi bi-person px-2"></i>Profile</p>
+            </a>
+            <a href="calendar.html">
+                <p class="p-2 rounded-2xl hover:bg-purple-900 cursor-pointer hover:text-white mr-2 mb-1"><i
+                        class="bi bi-calendar2 px-2"></i>Calendar</p>
+            </a>
+        </nav>
+
+        <div class="flex flex-col flex-grow">
+            <nav class="flex bg-gray-300 p-3">
+                <p class="font-bold text-xl px-2 hover:text-purple-900 cursor-pointer">Meetings<i
+                        class="bi bi-caret-down-fill pl-2"></i></p>
+            </nav>
+
+            <!-- Meetings container -->
+            <div id="meetingContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
+                <!-- Dynamic meeting content will be displayed here -->
+            </div>
+            
+
+            <!-- Schedule Meeting button -->
+            <div class="fixed bottom-0 right-0 p-6">
+                <button id="toggleButton" class="bg-purple-900 text-white font-semibold w-fit p-3 rounded-xl">
+                    Schedule a Meeting +
+                </button>
+            </div>
+
+            <!-- Meeting Form Modal -->
+            <form id="meetingForm" class="flex-col hidden bg-white w-full max-w-md rounded-lg shadow-lg p-6 fixed -top-32 right-1/2 transform translate-x-1/2 translate-y-1/2">
+                <button type="button" id="closeButton" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700">
+                    <i class="bi bi-x-lg text-2xl"></i>
+                </button>
+                <p class="font-semibold text-black text-xl mb-4 text-center">Schedule Meeting</p>
+                <label class="block mb-4">
+                    <span class="block text-gray-700 font-medium">Title</span>
+                    <input type="text" name="title" id="title" placeholder="Enter Meeting Title" class="font-medium text-gray-700 border-2 border-gray-300 rounded-md w-full mt-1 p-1">
+                </label>
+                <label class="block mb-4">
+                    <span class="block text-gray-700 font-medium">Date</span>
+                    <input type="date" name="date" id="date" class="font-medium text-gray-700 border-2 border-gray-300 rounded-md w-full mt-1 p-1">
+                </label>
+                <label class="block mb-4">
+                    <span class="block text-gray-700 font-medium">Time</span>
+                    <input type="time" name="time" id="time" class="font-medium text-gray-700 border-2 border-gray-300 rounded-md w-full mt-1 p-1">
+                </label>
+                <label class="block mb-4">
+                    <span class="block text-gray-700 font-medium">Agenda</span>
+                    <textarea id="agenda" name="agenda" placeholder="Add agenda" class="font-medium text-gray-700 border-2 border-gray-300 rounded-md w-full mt-1 p-1 h-24 resize-none"></textarea>
+                </label>
+                <button type="button" id="submitButton" class="bg-purple-900 text-white font-semibold p-2 px-6 rounded-xl">
+                    Schedule Meeting
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Toggle Meeting Form
+        document.getElementById('toggleButton').addEventListener('click', function () {
+            var form = document.getElementById('meetingForm');
+            form.classList.toggle('hidden');
+        });
+    
+        // Close Meeting Form
+        document.getElementById('closeButton').addEventListener('click', function () {
+            var form = document.getElementById('meetingForm');
+            form.classList.add('hidden');
+        });
+    
+        // Store meetings in a global array to search later
+        let meetingsData = [];
+    
+        // Fetch and display meetings
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchMeetings();
+        });
+        function fetchMeetings() {
+            fetch('/get-meetings')
+                .then(response => response.json())
+                .then(meetings => {
+                    const container = document.getElementById('meetingContainer');
+                    container.innerHTML = ''; // Clear any existing content
+                    meetingsData = meetings;  // Store the meetings data for searching
+
+                    meetings.forEach(meeting => {
+                        const meetingDiv = document.createElement('div');
+                        meetingDiv.className = 'meeting-item flex flex-col rounded-lg shadow-lg overflow-hidden bg-white border border-gray-200 hover:shadow-xl transition-transform transform hover:scale-105';
+
+                        meetingDiv.innerHTML = `
+                            <div class="bg-purple-900 text-white text-center py-2 font-semibold">
+                                <p class="text-md">${meeting.title}</p>
+                            </div>
+                            <div class="px-6 py-4">
+                                <p class="text-gray-600 text-sm font-medium">${meeting.agenda}</p>
+                                <p class="text-gray-700 mt-3 flex items-center text-sm font-semibold">
+                                    <i class="bi bi-clock-fill text-purple-700 mr-2"></i>
+                                    ${new Date(meeting.date).toLocaleDateString()} at ${meeting.time}
+                                </p>
+                            </div>
+                            <div class="px-6 py-4 flex justify-end">
+                                <button class="bg-purple-900 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-800 transition-colors join-meeting-btn" data-roomid="${meeting.roomId}">
+                                    Join Meeting
+                                </button>
+                            </div>
+                        `;
+
+                        container.appendChild(meetingDiv);
+                    });
+
+                })
+                .catch(error => console.error('Error fetching meetings:', error));
+        }
+
+        document.getElementById('meetingContainer').addEventListener('click', function (event) {
+            if (event.target.classList.contains('join-meeting-btn')) {
+                const roomId = event.target.getAttribute('data-roomid');
+                const meetingDiv = event.target.closest('.meeting-item');
+                const meetingTitle = meetingDiv.querySelector('p').textContent.trim();
+                const meetingAgenda = meetingDiv.querySelector('.text-gray-600').textContent.trim();
+                const meetingTime = meetingDiv.querySelector('.bi-clock-fill').nextSibling.textContent.trim();
+
+                // Store the meeting details in localStorage
+                localStorage.setItem('meetingDetails', JSON.stringify({
+                    title: meetingTitle,
+                    agenda: meetingAgenda,
+                    time: meetingTime,
+                }));
+
+                // Redirect to meet.html
+                window.location.href = `/meet.html?roomId=${roomId}`;
+            }
+        });
+
+
+
+        // Submit Meeting Form
+        document.getElementById('submitButton').addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            var title = document.getElementById('title').value.trim();
+            var date = document.getElementById('date').value;
+            var time = document.getElementById('time').value;
+            var agenda = document.getElementById('agenda').value.trim();
+
+            if (!title || !date || !time || !agenda) {
+                alert('Please fill out all fields before scheduling the meeting.');
+                return; 
+            }
+
+            fetch('/schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, date, time, agenda }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('meetingContainer');
+                const newMeetingDiv = document.createElement('div');
+                newMeetingDiv.className = 'meeting-item flex flex-col rounded-lg shadow-lg overflow-hidden bg-white border border-gray-200 hover:shadow-xl transition-transform transform hover:scale-105';
+
+                newMeetingDiv.innerHTML = `
+                    <div class="bg-purple-900 text-white text-center py-3 font-semibold">
+                        <p class="text-lg">${title}</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-gray-600 text-sm font-medium">${agenda}</p>
+                        <p class="text-gray-700 mt-3 flex items-center text-sm font-semibold">
+                            <i class="bi bi-clock-fill text-purple-700 mr-2"></i>
+                            ${new Date(date).toLocaleDateString()} at ${time}
+                        </p>
+                    </div>
+                    <div class="px-6 py-4 flex justify-end">
+                        <button class="bg-purple-900 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-800 transition-colors join-meeting-btn" data-roomid="${data.roomId}">
+                            Join Meeting
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(newMeetingDiv);
+
+                alert('Meeting scheduled successfully!');
+                document.getElementById('meetingForm').classList.add('hidden');
+
+            })
+            .catch(error => console.error('Error scheduling meeting:', error));
+        });
+
+
+    
+        // Search functionality
+        document.getElementById('searchBar').addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+            const meetingItems = document.querySelectorAll('.meeting-item');
+    
+            let found = false;
+    
+            meetingItems.forEach(meetingDiv => {
+                const title = meetingDiv.querySelector('p').textContent.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    meetingDiv.classList.remove('hidden');
+                    found = true;
+                } else {
+                    meetingDiv.classList.add('hidden');
+                }
+            });
+    
+            // Show alert if no meetings match
+            if (!found && searchTerm.trim() !== '') {
+                alert('No meetings found.');
+            }
+        });
+    </script>
+    
+    
+</body>
+
+</html>
