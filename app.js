@@ -11,12 +11,21 @@ const MongoStore = require('connect-mongo'); // To store session in MongoDB
 const bodyParser = require('body-parser');
 const stream = require('./sockets/stream');
 const socketIO = require('socket.io');
+const cors = require('cors');
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: "*", // Allow all origins (be cautious in production)
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+app.use(cors());
 
 
 // Connect the socket with your stream logic
