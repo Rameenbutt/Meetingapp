@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
-
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>  
     <title>Meeting Interface</title>
     <style>
@@ -74,6 +74,14 @@
         #remoteVideoContainer {
             display: none;
         }
+        /* Responsive local video styling */
+        #localVideo {
+            aspect-ratio: calc(90%-220px);
+            max-width: 100vw;         /* Ensure the video doesn't exceed the viewport width */
+            max-height: 70vh;        /* Ensure the video doesn't exceed the viewport height */
+            object-fit: contain;      /* Contain the video inside its box without cropping */
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-900 h-screen flex flex-col text-white relative overflow-hidden">
@@ -102,9 +110,10 @@
             <i id="chatIcon" class="bi bi-chat-left-dots text-2xl text-gray-400 hover:text-white hover-transition cursor-pointer"></i>
         </nav>
 
-        <div id="localVideoContainer" class="flex-grow flex flex-col justify-center items-center bg-gray-900 py-10 border-2 border-gray-500 mx-4">
-            <!-- Local Video -->
-            <video id="localVideo" autoplay muted class="h-64 w-64 rounded-md border-2 border-gray-700"></video>
+        <div id="localVideoContainer" class="flex-grow flex flex-col justify-center items-center bg-gray-900 border-2 border-gray-500 mx-4">
+            <!-- Local Video or Screen Share -->
+            <video id="localVideo" autoplay muted class="video-element"></video>
+        
             <!-- Initials placeholder with hover effect -->
             <div id="localFallbackInitials" class="relative group flex items-center justify-center bg-yellow-500 text-white rounded-full h-32 w-32 text-4xl font-bold">
                 <!-- Dynamic Initials -->
@@ -115,6 +124,7 @@
                 </span>
             </div>
         </div>
+        
         
         <!-- Video section for remote participants -->
         <div id="remoteVideoContainer" class="flex-grow flex flex-col justify-center items-center bg-gray-900 py-10 border-2 border-gray-500 mx-4">
@@ -211,42 +221,90 @@
         let audioTrackEnabled = true; // Track state of the audio
     
         navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                localVideo.srcObject = stream;
-                localStream = stream;
-    
-                const videoTracks = stream.getVideoTracks();
-                if (videoTracks.length > 0) {
-                    console.log(`Using video device: ${videoTracks[0].label}`);
+        .then(stream => {
+            localVideo.srcObject = stream;
+            localStream = stream;
+
+            const videoTracks = stream.getVideoTracks();
+            if (videoTracks.length > 0) {
+                console.log(`Using video device: ${videoTracks[0].label}`);
+            }
+
+            // Display the video and hide initials placeholder
+            localVideo.style.display = 'block';
+            localFallbackInitials.style.display = 'none';
+
+            // Initialize the peer connection
+            peerConnection = new RTCPeerConnection();
+
+            // Add tracks from the local stream to the peer connection
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            // Set up the onicecandidate handler to send ICE candidates to the remote peer
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    // Emit ICE candidate to the server
+                    socket.emit('iceCandidate', { candidate: event.candidate, roomId });
                 }
-    
-                // Display the video and hide initials placeholder
-                localVideo.style.display = 'block';
-                localFallbackInitials.style.display = 'none';
+            };
 
-                // Initialize the peer connection (example for setting up WebRTC connection)
-                    peerConnection = new RTCPeerConnection();
+            // Create an offer and emit it
+            peerConnection.createOffer()
+                .then(offer => {
+                    // Set the local description with the created offer
+                    return peerConnection.setLocalDescription(offer);
+                })
+                .then(() => {
+                    // Emit the offer to the signaling server
+                    socket.emit('offer', { offer: peerConnection.localDescription, roomId });
+                })
+                .catch(error => {
+                    console.error('Error creating offer:', error);
+                });
 
-                // Add tracks from the local stream to the peer connection
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            socket.emit('joinRoom', roomId, stream);
+        })
+        .catch(error => {
+            console.error('Error accessing media devices.', error);
+        });
 
-    
-                socket.emit('joinRoom', roomId, stream);
-            })
-            .catch(error => {
-                console.error('Error accessing media devices.', error);
-            });
+
+
+        socket.on('offer', async (data) => {
+            const { offer } = data;
+            
+            // Set up the peer connection if not already created
+            peerConnection = new RTCPeerConnection();
+
+            // Set the remote description as the received offer
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+            // Create an answer and set it as the local description
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            // Send the answer back to the initiating peer
+            socket.emit('answer', { answer: peerConnection.localDescription, roomId });
+        });
+
+
     
         // Toggle video button
         document.getElementById('toggleVideo').addEventListener('click', () => {
-            const videoTracks = localVideo.srcObject.getVideoTracks();
+            const videoTracks = localStream.getVideoTracks();
             if (videoTracks.length > 0) {
                 isLocalVideoEnabled = !isLocalVideoEnabled;
                 videoTracks.forEach(track => track.enabled = isLocalVideoEnabled);
-    
-                localVideo.style.display = isLocalVideoEnabled ? 'block' : 'none'; 
-                localFallbackInitials.style.display = isLocalVideoEnabled ? 'none' : 'flex'; 
-    
+
+                // Update the UI based on video state
+                if (isLocalVideoEnabled) {
+                    localVideo.style.display = 'block';  // Show video
+                    localFallbackInitials.style.display = 'none';  // Hide initials
+                } else {
+                    localVideo.style.display = 'none';  // Hide video
+                    localFallbackInitials.style.display = 'flex';  // Show initials
+                }
+
                 const videoIcon = document.querySelector('#toggleVideo i');
                 videoIcon.classList.toggle('bi-camera-video', isLocalVideoEnabled);
                 videoIcon.classList.toggle('bi-camera-video-off', !isLocalVideoEnabled);
@@ -265,16 +323,15 @@
         let isScreenSharing = false;
         let originalStream = null;
         let screenStream = null;
+        // Toggle screen share button
         document.getElementById('toggleScreenShare').addEventListener('click', async () => {
-            const videoToggleButton = document.getElementById('toggleVideo'); // Assume this is your video toggle button
+            const videoToggleButton = document.getElementById('toggleVideo');
 
             if (!isScreenSharing) {
                 try {
-                    // Start screen sharing
                     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     const screenTrack = screenStream.getVideoTracks()[0];
 
-                    // Save original stream and replace video track with screen track
                     if (localStream) {
                         originalStream = localStream.getVideoTracks()[0];
                         const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
@@ -282,21 +339,18 @@
                             sender.replaceTrack(screenTrack);
                         }
 
-                        // Disable the video toggle button during screen sharing
+                        // Disable video toggle during screen sharing
                         videoToggleButton.disabled = true;
 
-                        // Hide local video during screen sharing
-                        localVideo.style.display = 'none'; // Hide the video element itself
-                        localFallbackInitials.style.display = 'none'; // Hide initials during screen sharing
+                        // Display the screen sharing stream
+                        localVideo.srcObject = screenStream;
+                        localVideo.style.display = 'block';
+                        localFallbackInitials.style.display = 'none';
 
-                        // Show screen share in the same container
-                        localVideo.srcObject = screenStream;  // Show the screen share instead of video
-                        localVideo.style.display = 'block';  // Show the local video element for the screen share
-
-                        // Change the icon to indicate screen sharing is active
+                        // Change screen share icon
                         document.querySelector('#toggleScreenShare i').classList.replace('bi-box-arrow-up', 'bi-box-arrow-in-down');
 
-                        // Listen for the end of screen sharing
+                        // Handle screen sharing ending
                         screenTrack.onended = stopScreenSharing;
 
                         isScreenSharing = true;
@@ -312,34 +366,59 @@
         function stopScreenSharing() {
             if (screenStream) {
                 const screenTrack = screenStream.getVideoTracks()[0];
-                screenTrack.stop();
+                screenTrack.stop(); // Stop the screen share stream
 
-                // Replace screen track with original video track
+                // Revert to the original camera stream if available
                 if (originalStream) {
                     const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
                     if (sender) {
-                        sender.replaceTrack(originalStream);
+                        sender.replaceTrack(originalStream); // Replace the screen share track with the original video track
                     }
 
-                    // Revert to the original local camera stream
-                    if (localStream.getVideoTracks()[0].enabled) {
-                        localVideo.srcObject = localStream;  // Set the local camera stream back
-                        localVideo.style.display = 'block';  // Show local video again
-                        localFallbackInitials.style.display = 'none';  // Hide initials
+                    // Check if the local video track was enabled before screen sharing
+                    const videoTracks = localStream.getVideoTracks();
+                    const wasVideoEnabled = videoTracks.length > 0 ? videoTracks[0].enabled : false;
+
+                    if (wasVideoEnabled) {
+                        // If video was enabled, keep the local camera stream in the video element
+                        localVideo.srcObject = localStream;
+                        localVideo.style.display = 'block'; // Show video container
+                        localFallbackInitials.style.display = 'none'; // Hide fallback initials
                     } else {
-                        localVideo.style.display = 'none';  // Hide video if it was off before screen sharing
-                        localFallbackInitials.style.display = 'flex';  // Show initials again
+                        // If video was disabled, keep the stream but hide the video element and show initials
+                        localVideo.srcObject = localStream; // Keep stream linked to the video element
+                        localVideo.style.display = 'none'; // Hide video container
+                        localFallbackInitials.style.display = 'flex'; // Show fallback initials
                     }
 
-                    // Re-enable the video toggle button after screen sharing ends
+                    // Re-enable the video toggle button after screen sharing
                     document.getElementById('toggleVideo').disabled = false;
 
-                    // Change the icon back to the regular screen share icon
+                    // Reset the screen share icon
                     document.querySelector('#toggleScreenShare i').classList.replace('bi-box-arrow-in-down', 'bi-box-arrow-up');
 
+                    // Mark screen sharing as stopped
                     isScreenSharing = false;
                 }
             }
+        }
+
+
+
+
+
+        window.addEventListener('resize', () => {
+            adjustVideoSize();
+        });
+
+        function adjustVideoSize() {
+            const localVideo = document.getElementById('localVideo');
+            const maxWidth = window.innerWidth * 0.7; // 90% of viewport width
+            const maxHeight = window.innerHeight * 0.7; // 90% of viewport height
+
+            // Set max width and height dynamically
+            localVideo.style.maxWidth = `${maxWidth}px`;
+            localVideo.style.maxHeight = `${maxHeight}px`;
         }
 
 

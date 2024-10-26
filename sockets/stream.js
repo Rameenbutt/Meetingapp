@@ -1,20 +1,39 @@
 const stream = (socket) => {
   
-  // Join a specific meeting room
-  socket.on('joinMeeting', (data) => {
-    const { roomId } = data;
-    
-    // Join the socket to the meeting room
+  // socket.on('joinRoom', (roomId, stream) => {
+  //   console.log(`User ${socket.id} is joining room: ${roomId}`);
+
+  //   // Join the specified room
+  //   socket.join(roomId);
+
+  //   // Notify other users in the room about the new user
+  //   socket.to(roomId).emit('userJoined', socket.id);
+
+  //   // Listen for when the user disconnects
+  //   socket.on('disconnect', () => {
+  //       console.log(`User ${socket.id} disconnected from room ${roomId}`);
+  //       socket.to(roomId).emit('userLeft', socket.id);
+  //   });
+  // });
+
+  socket.on('join-room', (roomId, userId, userStream) => {
     socket.join(roomId);
-    console.log(`User joined meeting room: ${roomId}`);
+    console.log(`User ${userId} joined room ${roomId}`);
+    
+    // Broadcast to other users that a new user has connected
+    socket.to(roomId).emit('user-connected', userStream);
 
-    // Emit a welcome message to the user who joined
-    socket.emit('message', 'Welcome to the meeting room!');
+    // When the user leaves the room
+    socket.on('user-left', () => {
+        socket.to(roomId).emit('user-left', userId);
+        console.log(`User ${userId} left room ${roomId}`);
+    });
 
-    // Notify the room about the new user joining
-    socket.to(roomId).emit('message', 'A new user has joined the meeting!');
+    // Handle user disconnect (e.g., page closed)
+    socket.on('disconnect', () => {
+        socket.to(roomId).emit('user-left', userId);
+    });
   });
-
   // Handle WebRTC signaling
   socket.on('offer', (data) => {
     const { offer, roomId } = data;
